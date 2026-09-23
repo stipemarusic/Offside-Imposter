@@ -5,12 +5,20 @@ type RoundTimerProps = {
   initialSeconds?: number;
 };
 
-export function RoundTimer({ initialSeconds = 120 }: RoundTimerProps) {
-  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+const defaultInitialSeconds = 120;
+
+export function RoundTimer({ initialSeconds }: RoundTimerProps) {
+  const safeInitialSeconds = normalizeInitialSeconds(initialSeconds);
+  const [secondsLeft, setSecondsLeft] = useState(safeInitialSeconds);
   const [isRunning, setIsRunning] = useState(true);
-  const progress = secondsLeft / initialSeconds;
+  const progressWidth = getProgressWidth(secondsLeft, safeInitialSeconds);
   const isFinished = secondsLeft === 0;
   const formattedTime = useMemo(() => formatTime(secondsLeft), [secondsLeft]);
+
+  useEffect(() => {
+    setSecondsLeft(safeInitialSeconds);
+    setIsRunning(true);
+  }, [safeInitialSeconds]);
 
   useEffect(() => {
     if (!isRunning || isFinished) {
@@ -25,7 +33,7 @@ export function RoundTimer({ initialSeconds = 120 }: RoundTimerProps) {
   }, [isFinished, isRunning]);
 
   function resetTimer() {
-    setSecondsLeft(initialSeconds);
+    setSecondsLeft(safeInitialSeconds);
     setIsRunning(true);
   }
 
@@ -34,10 +42,10 @@ export function RoundTimer({ initialSeconds = 120 }: RoundTimerProps) {
       <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-100/80">Discussion timer</p>
       <p className="mt-2 text-5xl font-black tabular-nums text-white">{formattedTime}</p>
 
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-900/80">
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
         <div
           className="h-full rounded-full bg-emerald-300 transition-all duration-500"
-          style={{ width: `${progress * 100}%` }}
+          style={{ width: progressWidth }}
         />
       </div>
 
@@ -62,4 +70,19 @@ function formatTime(totalSeconds: number) {
   const seconds = totalSeconds % 60;
 
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function normalizeInitialSeconds(initialSeconds: number | undefined) {
+  if (!initialSeconds || initialSeconds <= 0 || !Number.isFinite(initialSeconds)) {
+    return defaultInitialSeconds;
+  }
+
+  return initialSeconds;
+}
+
+function getProgressWidth(secondsLeft: number, durationSeconds: number) {
+  const safeDurationSeconds = normalizeInitialSeconds(durationSeconds);
+  const safeSecondsLeft = Number.isFinite(secondsLeft) ? secondsLeft : 0;
+  const progress = Math.min(1, Math.max(0, safeSecondsLeft / safeDurationSeconds));
+  return `${progress * 100}%`;
 }
