@@ -1,5 +1,6 @@
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
+import { RoundTimer } from "../../components/RoundTimer";
 
 type DiscussionScreenProps = {
   onStartVoting: () => void;
@@ -14,6 +15,7 @@ export function DiscussionScreen({ onStartVoting }: DiscussionScreenProps) {
         <p>Take turns giving clues.</p>
         <p>Try to find who is in the offside position.</p>
       </div>
+      <RoundTimer />
       <Button className="mt-8" onClick={onStartVoting}>
         Start Voting
       </Button>
